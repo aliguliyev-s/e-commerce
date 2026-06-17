@@ -118,6 +118,11 @@ export const AppProvider = ({ children }) => {
     clearCart(); // Clear cart after successful order creation
   };
 
+  const updateOrderStatus = (orderId, newStatus) => {
+    setOrders((prevOrders) =>
+      prevOrders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
+  };
 
   // 3. CART ACTIONS: add, update and remove items in the cart
   const addToCart = (product, color, size, quantity = 1) => {
@@ -253,7 +258,8 @@ export const AppProvider = ({ children }) => {
         loginUser,
         logoutUser,
         updateProfile,
-        placeOrder
+        placeOrder,
+        updateOrderStatus
       }}
     >
       {children}

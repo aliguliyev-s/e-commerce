@@ -1,29 +1,77 @@
 // src/components/ProductCard.jsx
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Import Link for routing
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export const ProductCard = ({ product }) => { 
-  // Include cart in the context destructuring (used for 'already in cart' checks)
   const { addToCart, toggleWishlist, wishlist, cart } = useApp();
   
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '');
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
+  
+  // НАТИВНЫЙ ИНДЕКС СЛАЙДЕРА (Вместо Bootstrap)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Dynamically get image array depending on selected color
+  // Compute real rating
+  const ratingMetrics = useMemo(() => {
+    try {
+      const savedComments = localStorage.getItem(`eshop_comments_${product.id}`);
+      if (savedComments) {
+        const comments = JSON.parse(savedComments);
+        if (Array.isArray(comments) && comments.length > 0) {
+          const totalSum = comments.reduce((sum, c) => sum + Number(c.rating || 0), 0);
+          return {
+            rating: Number((totalSum / comments.length).toFixed(1)),
+            reviewCount: comments.length
+          };
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const savedProducts = localStorage.getItem('eshop_products');
+      if (savedProducts) {
+        const parsed = JSON.parse(savedProducts);
+        if (Array.isArray(parsed)) {
+          const synced = parsed.find((p) => String(p.id) === String(product.id));
+          if (synced && (synced.rating !== undefined || synced.reviewCount !== undefined)) {
+            const r = Number(synced.rating || product.rating || 5.0);
+            return {
+              rating: Number(r.toFixed(1)),
+              reviewCount: Number(synced.reviewCount || product.reviewCount || 0)
+            };
+          }
+        }
+      }
+    } catch (e) {}
+
+    return { rating: null, reviewCount: 0 };
+  }, [product.id, product.rating, product.reviewCount]);
+
   const currentImages = product.images[selectedColor] || [];
-
-  // FIXED: safe ID comparison using Number coercion
   const isInWishlist = wishlist.some(item => Number(item.id) === Number(product.id));
 
-  // Reset carousel to first image when the selected color changes
+  // Сброс индекса картинки на 0 при смене цвета
   useEffect(() => {
-    const carouselEl = document.getElementById(`carousel-${product.id}`);
-    if (carouselEl && window.bootstrap?.Carousel) {
-      const carousel = window.bootstrap.Carousel.getInstance(carouselEl);
-      if (carousel) carousel.to(0);
-    }
-  }, [selectedColor, product.id]);
+    setCurrentImageIndex(0);
+  }, [selectedColor]);
+
+  // Функции переключения слайдов на чистом React
+  const handlePrev = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? currentImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === currentImages.length - 1 ? 0 : prevIndex + 1
+    );
+  };
 
   const getStockBadge = () => {
     if (product.stock === 0) return <span className="badge bg-danger">Out of stock</span>;
@@ -31,7 +79,6 @@ export const ProductCard = ({ product }) => {
     return <span className="badge bg-success-subtle text-success">In Stock ({product.stock})</span>;
   };
 
-  // FIXED: safe ID comparison for cart items
   const isAlreadyInCart = cart?.some(
     (item) => Number(item.id) === Number(product.id) && item.color === selectedColor && item.size === selectedSize
   );
@@ -46,7 +93,7 @@ export const ProductCard = ({ product }) => {
           {getStockBadge()}
         </div>
 
-        {/* FIXED: ensured proper zIndex, stopped click propagation and prevented default navigation when toggling wishlist */}
+        {/* Wishlist toggle button */}
         <button 
           onClick={(e) => {
             e.preventDefault();
@@ -54,32 +101,41 @@ export const ProductCard = ({ product }) => {
             toggleWishlist(product);
           }}
           className="btn btn-light position-absolute top-0 end-0 m-2 rounded-circle shadow-sm px-2 py-1"
-          style={{ zIndex: 30, pointerEvents: 'auto' }}
+          style={{ zIndex: 30 }}
           type="button"
         >
           <i className={`bi ${isInWishlist ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
         </button>
 
-        {/* --- DYNAMIC BOOTSTRAP CAROUSEL FOR IMAGES --- */}
-        <div id={`carousel-${product.id}`} className="carousel slide bg-light" data-bs-ride="false">
+        {/* --- ЧИСТАЯ REACT КАРУСЕЛЬ (БЕЗ BOOTSTRAP JS) --- */}
+        <div className="carousel slide bg-light position-relative">
+          
+          {/* Индикаторы (точки) */}
           <div className="carousel-indicators" style={{ marginBottom: '0.5rem', zIndex: 11 }}>
             {currentImages.map((_, index) => (
               <button 
                 key={`${selectedColor}-${index}`}
                 type="button" 
-                data-bs-target={`#carousel-${product.id}`} 
-                data-bs-slide-to={index} 
-                className={index === 0 ? 'active' : ''}
-                aria-current={index === 0 ? 'true' : 'false'}
+                className={index === currentImageIndex ? 'active' : ''}
+                style={{ opacity: index === currentImageIndex ? 1 : 0.5 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentImageIndex(index);
+                }}
               ></button>
             ))}
           </div>
           
-          {/* Clicking the slider area (except arrows) navigates to the product page */}
+          {/* Область картинок */}
           <Link to={`/product/${product.id}`} className="d-block text-decoration-none">
             <div className="carousel-inner" style={{ height: '250px' }}>
               {currentImages.map((img, index) => (
-                <div key={`${selectedColor}-${index}`} className={`carousel-item h-100 ${index === 0 ? 'active' : ''}`}>
+                <div 
+                  key={`${selectedColor}-${index}`} 
+                  className={`carousel-item h-100 ${index === currentImageIndex ? 'active' : ''}`}
+                  style={{ display: index === currentImageIndex ? 'block' : 'none' }}
+                >
                   <img 
                     src={img} 
                     alt={`${product.title} - ${selectedColor}`} 
@@ -91,14 +147,24 @@ export const ProductCard = ({ product }) => {
             </div>
           </Link>
 
-          {/* Carousel navigation arrows */}
+          {/* Стрелочки переключения */}
           {currentImages.length > 1 && (
             <>
-              <button className="carousel-control-prev" type="button" data-bs-target={`#carousel-${product.id}`} data-bs-slide="prev" style={{ zIndex: 12 }}>
+              <button 
+                className="carousel-control-prev" 
+                type="button" 
+                style={{ zIndex: 15, background: 'none', border: 'none' }}
+                onClick={handlePrev}
+              >
                 <span className="carousel-control-prev-icon" aria-hidden="true" style={{ filter: 'invert(1) grayscale(100%)' }}></span>
                 <span className="visually-hidden">Previous</span>
               </button>
-              <button className="carousel-control-next" type="button" data-bs-target={`#carousel-${product.id}`} data-bs-slide="next" style={{ zIndex: 12 }}>
+              <button 
+                className="carousel-control-next" 
+                type="button" 
+                style={{ zIndex: 15, background: 'none', border: 'none' }}
+                onClick={handleNext}
+              >
                 <span className="carousel-control-next-icon" aria-hidden="true" style={{ filter: 'invert(1) grayscale(100%)' }}></span>
                 <span className="visually-hidden">Next</span>
               </button>
@@ -107,28 +173,34 @@ export const ProductCard = ({ product }) => {
         </div>
 
         {/* --- CARD BODY --- */}
-        <div className="card-body d-flex flex-column pt-3">
+        <div className="card-body d-flex flex-column pt-3 text-start">
           <span className="text-muted small text-uppercase fw-semibold">{product.category}</span>
           
-          {/* Product title */}
           <h5 className="card-title my-1 text-truncate" title={product.title}>
-            <Link to={`/product/${product.id}`} className="text-decoration-none text-dark fw-bold text-hover-warning" style={{ transition: 'color 0.15s' }}>
+            <Link to={`/product/${product.id}`} className="text-decoration-none text-dark fw-bold text-hover-warning">
               {product.title}
             </Link>
           </h5>
           
-          {/* Rating */}
-          <div className="mb-2 text-warning small">
-            <i className="bi bi-star-fill me-1"></i>
-            <span className="text-dark fw-bold">{product.rating}</span>
-            <span className="text-muted ms-1">({product.reviewsCount || 0} reviews)</span>
+          {/* Рейтинг */}
+          <div className="mb-2 small d-flex align-items-center gap-2">
+            <div className="text-warning d-flex align-items-center">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <i
+                  key={i}
+                  className={`bi ${ratingMetrics.rating !== null && i < Math.round(ratingMetrics.rating) ? 'bi-star-fill' : 'bi-star'} me-1`}
+                ></i>
+              ))}
+            </div>
+            <span className="text-dark fw-bold">{ratingMetrics.rating !== null ? ratingMetrics.rating : '—'}</span>
+            <span className="text-muted ms-1">{ratingMetrics.reviewCount > 0 ? `(${ratingMetrics.reviewCount} reviews)` : 'New'}</span>
           </div>
 
           <p className="card-text text-muted small mb-3" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', height: '40px' }}>
             {product.description}
           </p>
 
-          {/* --- VARIANTS: COLORS --- */}
+          {/* Варианты: Цвета */}
           <div className="mb-2">
             <div className="text-muted small mb-1">Color: <span className="text-dark text-capitalize fw-semibold">{selectedColor}</span></div>
             <div className="d-flex gap-2 flex-wrap">
@@ -152,7 +224,7 @@ export const ProductCard = ({ product }) => {
             </div>
           </div>
 
-          {/* --- VARIANTS: SIZES --- */}
+          {/* Варианты: Размеры */}
           <div className="mb-3">
             <div className="text-muted small mb-1">Size: <span className="text-dark fw-semibold">{selectedSize}</span></div>
             <div className="d-flex gap-1 flex-wrap">
@@ -170,7 +242,7 @@ export const ProductCard = ({ product }) => {
             </div>
           </div>
 
-          {/* Price & Actions */}
+          {/* Цена и кнопка купить */}
           <div className="mt-auto pt-3 border-top d-flex align-items-center justify-content-between">
             <span className="fs-5 fw-bold text-dark">${product.price.toFixed(2)}</span>
             
@@ -185,17 +257,7 @@ export const ProductCard = ({ product }) => {
               }`}
               disabled={product.stock === 0 || isAlreadyInCart}
             >
-              {product.stock === 0 ? (
-                <>Out of Stock</>
-              ) : isAlreadyInCart ? (
-                <>
-                  <i className="bi bi-check-lg me-1"></i> Added
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-cart-plus me-1"></i> Add to Cart
-                </>
-              )}
+              {product.stock === 0 ? 'Out of Stock' : isAlreadyInCart ? 'Added' : 'Add to Cart'}
             </button>
           </div>
         </div>
@@ -203,3 +265,5 @@ export const ProductCard = ({ product }) => {
     </div>
   );
 };
+
+export default ProductCard;
