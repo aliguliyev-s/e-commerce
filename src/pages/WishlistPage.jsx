@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ProductCard } from '../components/ProductCard';
+import { ProductCard } from '../pages/ProductCard';
 
 export const WishlistPage = () => {
   const { wishlist } = useApp();

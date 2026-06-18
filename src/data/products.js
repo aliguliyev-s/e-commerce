@@ -729,10 +729,10 @@ export const products = [
     sizes: ["20000mAh"],
     images: {
       black: [
-        "https://images.unsplash.com/photo-1609592424364-7f2824e83713?w=500&auto=format&fit=crop"
+        "https://images.pexels.com/photos/11031423/pexels-photo-11031423.png"
       ],
       white: [
-        "https://images.unsplash.com/photo-1623150502742-6a849aa94be4?w=500&auto=format&fit=crop"
+        "https://images.pexels.com/photos/11031423/pexels-photo-11031423.png"
       ]
     },
     stock: 45,

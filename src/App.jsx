@@ -3,22 +3,22 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { Header } from './components/Header';
-import { BackToTop } from './components/BackToTop';
-import { ProductCard } from './components/ProductCard';
-import { FiltersSidebar } from './components/FiltersSidebar';
-import { ProductPage } from './components/ProductPage';
-import { CartPage } from './components/CartPage';
-import { WishlistPage } from './components/WishlistPage';
-import { CheckoutPage } from './components/CheckoutPage';
-import { AdminPage } from './components/AdminPage';
+import { BackToTop } from './pages/BackToTop';
+import { ProductCard } from './pages/ProductCard';
+import { FiltersSidebar } from './pages/FiltersSidebar';
+import { ProductPage } from './pages/ProductPage';
+import { CartPage } from './pages/CartPage';
+import { WishlistPage } from './pages/WishlistPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { AdminPage } from './pages/AdminPage';
 
 // User account and authentication pages
-import { LoginPage } from './components/LoginPage';
-import { RegisterPage } from './components/RegisterPage';
-import { ProfilePage } from './components/ProfilePage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 // Layout helper to scroll window to top on route change
-import { ScrollToTop } from './components/ScrollToTop';
+import { ScrollToTop } from './pages/ScrollToTop';
 
 // Local default mock data fallback
 import { products as initialProducts } from './data/products';
