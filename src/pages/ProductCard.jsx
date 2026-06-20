@@ -9,7 +9,7 @@ export const ProductCard = ({ product }) => {
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '');
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   
-  // НАТИВНЫЙ ИНДЕКС СЛАЙДЕРА (Вместо Bootstrap)
+  // Native slider index (instead of Bootstrap)
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Compute real rating
@@ -51,12 +51,12 @@ export const ProductCard = ({ product }) => {
   const currentImages = product.images[selectedColor] || [];
   const isInWishlist = wishlist.some(item => Number(item.id) === Number(product.id));
 
-  // Сброс индекса картинки на 0 при смене цвета
+  // Reset image index to 0 when color changes
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [selectedColor]);
 
-  // Функции переключения слайдов на чистом React
+  // Slide navigation handlers using pure React
   const handlePrev = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -107,10 +107,10 @@ export const ProductCard = ({ product }) => {
           <i className={`bi ${isInWishlist ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
         </button>
 
-        {/* --- ЧИСТАЯ REACT КАРУСЕЛЬ (БЕЗ BOOTSTRAP JS) --- */}
+        {/* --- Pure React carousel (without Bootstrap JS) --- */}
         <div className="carousel slide bg-light position-relative">
           
-          {/* Индикаторы (точки) */}
+          {/* Indicators (dots) */}
           <div className="carousel-indicators" style={{ marginBottom: '0.5rem', zIndex: 11 }}>
             {currentImages.map((_, index) => (
               <button 
@@ -127,7 +127,7 @@ export const ProductCard = ({ product }) => {
             ))}
           </div>
           
-          {/* Область картинок */}
+          {/* Images area */}
           <Link to={`/product/${product.id}`} className="d-block text-decoration-none">
             <div className="carousel-inner" style={{ height: '250px' }}>
               {currentImages.map((img, index) => (
@@ -147,7 +147,7 @@ export const ProductCard = ({ product }) => {
             </div>
           </Link>
 
-          {/* Стрелочки переключения */}
+          {/* Navigation arrows */}
           {currentImages.length > 1 && (
             <>
               <button 
@@ -172,7 +172,7 @@ export const ProductCard = ({ product }) => {
           )}
         </div>
 
-        {/* --- CARD BODY --- */}
+          {/* --- CARD BODY --- */}
         <div className="card-body d-flex flex-column pt-3 text-start">
           <span className="text-muted small text-uppercase fw-semibold">{product.category}</span>
           
@@ -182,7 +182,7 @@ export const ProductCard = ({ product }) => {
             </Link>
           </h5>
           
-          {/* Рейтинг */}
+          {/* Rating */}
           <div className="mb-2 small d-flex align-items-center gap-2">
             <div className="text-warning d-flex align-items-center">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -200,7 +200,7 @@ export const ProductCard = ({ product }) => {
             {product.description}
           </p>
 
-          {/* Варианты: Цвета */}
+          {/* Options: Colors */}
           <div className="mb-2">
             <div className="text-muted small mb-1">Color: <span className="text-dark text-capitalize fw-semibold">{selectedColor}</span></div>
             <div className="d-flex gap-2 flex-wrap">
@@ -224,7 +224,7 @@ export const ProductCard = ({ product }) => {
             </div>
           </div>
 
-          {/* Варианты: Размеры */}
+          {/* Options: Sizes */}
           <div className="mb-3">
             <div className="text-muted small mb-1">Size: <span className="text-dark fw-semibold">{selectedSize}</span></div>
             <div className="d-flex gap-1 flex-wrap">
@@ -242,7 +242,7 @@ export const ProductCard = ({ product }) => {
             </div>
           </div>
 
-          {/* Цена и кнопка купить */}
+          {/* Price and buy button */}
           <div className="mt-auto pt-3 border-top d-flex align-items-center justify-content-between">
             <span className="fs-5 fw-bold text-dark">${product.price.toFixed(2)}</span>
             

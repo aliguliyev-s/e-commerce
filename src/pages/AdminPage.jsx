@@ -5,34 +5,34 @@ import { products as initialProducts } from '../data/products';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 
-// Chart.js modullarını qeydiyyatdan keçiririk
+// Register Chart.js modules
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export const AdminPage = () => {
   const { orders, updateOrderStatus } = useApp();
   
-  // Aktiv tabı idarə etmək üçün state ('statistics', 'products', 'categories', 'orders')
+  // State to manage active tab ('statistics', 'products', 'categories', 'orders')
   const [activeTab, setActiveTab] = useState('statistics');
 
-  // LocalStorage-dən məhsulları oxuyuruq, yoxdursa data/products-dan götürürük
+  // Read products from localStorage or use data/products if none
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem('eshop_products');
     return saved ? JSON.parse(saved) : initialProducts;
   });
 
-  // Kateqoriyalar siyahısı
+  // Categories list
   const [categories, setCategories] = useState(() => {
     const saved = localStorage.getItem('eshop_categories');
     return saved ? JSON.parse(saved) : [...new Set(initialProducts.map(p => p.category))];
   });
 
-  // Sifarişlər (Simulyasiya üçün local state, context-dən də gəlir)
+  // Orders (local state simulation; context may provide as well)
   const [adminOrders, setAdminOrders] = useState(() => {
     const saved = localStorage.getItem('eshop_orders');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // --- CRUD və Digər Dəyişiklikləri Yadda Saxlamaq ---
+  // --- Persist CRUD and other changes ---
   useEffect(() => {
     localStorage.setItem('eshop_products', JSON.stringify(products));
   }, [products]);
@@ -54,8 +54,8 @@ export const AdminPage = () => {
     const colorsArray = productForm.colors.split(',').map(c => c.trim().toLowerCase());
     const sizesArray = productForm.sizes.split(',').map(s => s.trim().toUpperCase());
 
-    // Çoxlu şəkil yükləmə simulyasiyası (Obyekt formatında: { color1: [url1, url2], color2: [url3] })
-    // Sadəlik üçün ilk rəngə yüklənən şəkilləri mənimsədirik
+    // Simulate multiple image upload (object format: { color1: [url1, url2], color2: [url3] })
+    // For simplicity, assign uploaded images to the first color
     const firstColor = colorsArray[0] || 'default';
     const imagesObject = { [firstColor]: productForm.images };
 
@@ -91,7 +91,7 @@ export const AdminPage = () => {
 
   const handleEditProduct = (product) => {
     setIsEditing(true);
-    // Şəkilləri obyektdən array formasına çıxarırıq
+    // Convert images object to an array form
     const allImages = Object.values(product.images || {}).flat();
     setProductForm({
       id: product.id,
@@ -106,7 +106,7 @@ export const AdminPage = () => {
   };
 
   const handleDeleteProduct = (id) => {
-    if (window.confirm('Bu məhsulu silmək istədiyinizdən əminsiniz?')) {
+    if (window.confirm('Are you sure you want to delete this product?')) {
       setProducts(prev => prev.filter(p => p.id !== id));
     }
   };
@@ -116,7 +116,7 @@ export const AdminPage = () => {
     setIsEditing(false);
   };
 
-  // Çoxlu şəkil yükləmə (Base64 formatına çevrilmə)
+  // Multiple image upload (convert to Base64)
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     const promises = files.map(file => {
@@ -142,7 +142,7 @@ export const AdminPage = () => {
     }
   };
   const handleDeleteCategory = (catName) => {
-    if (window.confirm(`"${catName}" kateqoriyasını silmək istəyirsiniz?`)) {
+    if (window.confirm(`Are you sure you want to delete the "${catName}" category?`)) {
       setCategories(prev => prev.filter(c => c !== catName));
     }
   };
@@ -156,7 +156,7 @@ export const AdminPage = () => {
   // --- STATISTICS CALCULATIONS & CHARTS ---
   const totalSales = adminOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   
-  // Kateqoriyalar üzrə məhsul sayı statistikası
+  // Product count statistics by category
   const categoryCounts = categories.reduce((obj, cat) => {
     obj[cat] = products.filter(p => p.category === cat).length;
     return obj;
@@ -165,7 +165,7 @@ export const AdminPage = () => {
   const barChartData = {
     labels: Object.keys(categoryCounts),
     datasets: [{
-      label: 'Məhsul Sayı',
+      label: 'Product Count',
       data: Object.values(categoryCounts),
       backgroundColor: 'rgba(255, 193, 7, 0.6)',
       borderColor: 'rgba(255, 193, 7, 1)',
@@ -173,7 +173,7 @@ export const AdminPage = () => {
     }]
   };
 
-  // Sifariş statusları üzrə statistika (Pie Chart)
+  // Statistics by order status (Pie Chart)
   const statusCounts = adminOrders.reduce((obj, o) => {
     obj[o.status] = (obj[o.status] || 0) + 1;
     return obj;
@@ -197,17 +197,17 @@ export const AdminPage = () => {
               <i className="bi bi-speedometer2 me-2"></i>Admin Panel
             </h5>
             <div className="nav flex-column nav-pills gap-2">
-              <button className={`nav-link text-start fw-semibold ${activeTab === 'statistics' ? 'active bg-warning text-dark' : 'text-secondary'}`} onClick={() => setActiveTab('statistics')}>
-                <i className="bi bi-graph-up me-2"></i> Satış Statistikası
+                      <button className={`nav-link text-start fw-semibold ${activeTab === 'statistics' ? 'active bg-warning text-dark' : 'text-secondary'}`} onClick={() => setActiveTab('statistics')}>
+                <i className="bi bi-graph-up me-2"></i> Sales Statistics
               </button>
               <button className={`nav-link text-start fw-semibold ${activeTab === 'products' ? 'active bg-warning text-dark' : 'text-secondary'}`} onClick={() => setActiveTab('products')}>
-                <i className="bi bi-box-seam me-2"></i> Məhsul CRUD
+                <i className="bi bi-box-seam me-2"></i> Manage Products
               </button>
               <button className={`nav-link text-start fw-semibold ${activeTab === 'categories' ? 'active bg-warning text-dark' : 'text-secondary'}`} onClick={() => setActiveTab('categories')}>
-                <i className="bi bi-tags me-2"></i> Kateqoriya İdarəetmə
+                <i className="bi bi-tags me-2"></i> Manage Categories
               </button>
               <button className={`nav-link text-start fw-semibold ${activeTab === 'orders' ? 'active bg-warning text-dark' : 'text-secondary'}`} onClick={() => setActiveTab('orders')}>
-                <i className="bi bi-receipt me-2"></i> Sifariş İdarəetmə 
+                <i className="bi bi-receipt me-2"></i> Order Management 
                 {adminOrders.filter(o => o.status === 'Processing').length > 0 && (
                   <span className="badge bg-danger ms-2">{adminOrders.filter(o => o.status === 'Processing').length}</span>
                 )}
@@ -216,31 +216,31 @@ export const AdminPage = () => {
           </div>
         </div>
 
-        {/* SAĞ TƏRƏF: KONTENT APARIŞI */}
+        {/* RIGHT SIDE: CONTENT AREA */}
         <div className="col-12 col-md-9">
           <div className="bg-white p-4 rounded shadow-sm border" style={{ minHeight: '60vh' }}>
             
-            {/* TAB 1: SATIŞ STATİSTİKASI */}
+                {/* TAB 1: SALES STATISTICS */}
             {activeTab === 'statistics' && (
               <div>
-                <h4 className="fw-bold mb-4">Dashboard & Statistika</h4>
+                <h4 className="fw-bold mb-4">Dashboard & Statistics</h4>
                 <div className="row g-3 mb-4">
                   <div className="col-12 col-sm-4">
                     <div className="p-3 bg-light rounded border border-start border-warning border-4 shadow-sm">
-                      <small className="text-muted fw-bold uppercase">Ümumi Qazanc</small>
+                      <small className="text-muted fw-bold uppercase">Total Revenue</small>
                       <h3 className="fw-bold m-0 text-dark">${totalSales.toFixed(2)}</h3>
                     </div>
                   </div>
                   <div className="col-12 col-sm-4">
                     <div className="p-3 bg-light rounded border border-start border-primary border-4 shadow-sm">
-                      <small className="text-muted fw-bold">Toplam Sifariş</small>
-                      <h3 className="fw-bold m-0 text-dark">{adminOrders.length} ədəd</h3>
+                      <small className="text-muted fw-bold">Total Orders</small>
+                      <h3 className="fw-bold m-0 text-dark">{adminOrders.length} orders</h3>
                     </div>
                   </div>
                   <div className="col-12 col-sm-4">
                     <div className="p-3 bg-light rounded border border-start border-success border-4 shadow-sm">
-                      <small className="text-muted fw-bold">Aktiv Məhsul Sayı</small>
-                      <h3 className="fw-bold m-0 text-dark">{products.length} çeşid</h3>
+                      <small className="text-muted fw-bold">Active Product Count</small>
+                      <h3 className="fw-bold m-0 text-dark">{products.length} products</h3>
                     </div>
                   </div>
                 </div>
@@ -248,13 +248,13 @@ export const AdminPage = () => {
                 <div className="row g-4 mt-2">
                   <div className="col-12 col-lg-7">
                     <div className="p-3 border rounded bg-light">
-                      <h6 className="fw-bold mb-3 text-muted">Kateqoriyalar üzrə məhsul paylanması</h6>
+                      <h6 className="fw-bold mb-3 text-muted">Product distribution by category</h6>
                       <Bar data={barChartData} />
                     </div>
                   </div>
                   <div className="col-12 col-lg-5">
                     <div className="p-3 border rounded bg-light">
-                      <h6 className="fw-bold mb-3 text-muted">Sifarişlərin Status nisbəti</h6>
+                      <h6 className="fw-bold mb-3 text-muted">Order Status Distribution</h6>
                       <div style={{ maxHeight: '280px', display: 'flex', justifyContent: 'center' }}>
                         <Pie data={pieChartData} />
                       </div>
@@ -264,37 +264,37 @@ export const AdminPage = () => {
               </div>
             )}
 
-            {/* TAB 2: MƏHSUL CRUD */}
+            {/* TAB 2: PRODUCT MANAGEMENT */}
             {activeTab === 'products' && (
               <div>
-                <h4 className="fw-bold mb-4">{isEditing ? 'Məhsulu Redaktə Et' : 'Yeni Məhsul Əlavə Et'}</h4>
+                <h4 className="fw-bold mb-4">{isEditing ? 'Edit Product' : 'Add New Product'}</h4>
                 <form onSubmit={handleProductSubmit} className="bg-light p-3 rounded border mb-5">
                   <div className="row g-3">
                     <div className="col-md-6">
-                      <label className="form-label small fw-bold">Məhsulun Adı</label>
-                      <input type="text" className="form-control" value={productForm.title} onChange={e => setProductForm({...productForm, title: e.target.value})} placeholder="Məs: Premium T-Shirt" required />
+                      <label className="form-label small fw-bold">Product Name</label>
+                      <input type="text" className="form-control" value={productForm.title} onChange={e => setProductForm({...productForm, title: e.target.value})} placeholder="e.g.: Premium T-Shirt" required />
                     </div>
                     <div className="col-md-3">
-                      <label className="form-label small fw-bold">Qiymət ($)</label>
+                      <label className="form-label small fw-bold">Price ($)</label>
                       <input type="number" className="form-control" value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} placeholder="45.00" required />
                     </div>
                     <div className="col-md-3">
-                      <label className="form-label small fw-bold">Kateqoriya</label>
+                      <label className="form-label small fw-bold">Category</label>
                       <select className="form-select" value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} required>
-                        <option value="">Seçin...</option>
+                        <option value="">Select...</option>
                         {categories.map((c, idx) => <option key={idx} value={c}>{c}</option>)}
                       </select>
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label small fw-bold">Rənglər (Vergüllə ayır)</label>
+                      <label className="form-label small fw-bold">Colors (comma separated)</label>
                       <input type="text" className="form-control" value={productForm.colors} onChange={e => setProductForm({...productForm, colors: e.target.value})} placeholder="black, white, red" required />
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label small fw-bold">Ölçülər (Vergüllə ayır)</label>
+                      <label className="form-label small fw-bold">Sizes (comma separated)</label>
                       <input type="text" className="form-control" value={productForm.sizes} onChange={e => setProductForm({...productForm, sizes: e.target.value})} placeholder="S, M, L, XL" required />
                     </div>
                     <div className="col-12">
-                      <label className="form-label small fw-bold">Məhsul Şəkilləri (Çoxlu seçim etmək olar)</label>
+                      <label className="form-label small fw-bold">Product Images (multiple allowed)</label>
                       <input type="file" className="form-control" multiple accept="image/*" onChange={handleImageChange} />
                       {productForm.images.length > 0 && (
                         <div className="d-flex gap-2 flex-wrap mt-2 bg-white p-2 rounded border">
@@ -306,26 +306,26 @@ export const AdminPage = () => {
                       )}
                     </div>
                     <div className="col-12">
-                      <label className="form-label small fw-bold">Açıqlama (Description)</label>
-                      <textarea className="form-control" rows="2" value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} placeholder="Məhsul haqqında geniş məlumat..."></textarea>
+                      <label className="form-label small fw-bold">Description</label>
+                      <textarea className="form-control" rows="2" value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} placeholder="Detailed product description..."></textarea>
                     </div>
                   </div>
-                  <div className="mt-3 d-flex gap-2">
-                    <button type="submit" className="btn btn-warning fw-bold px-4 rounded-pill">{isEditing ? 'Yenilə' : 'Əlavə Et'}</button>
-                    {isEditing && <button type="button" className="btn btn-outline-secondary rounded-pill" onClick={resetProductForm}>Ləğv Et</button>}
+                    <div className="mt-3 d-flex gap-2">
+                    <button type="submit" className="btn btn-warning fw-bold px-4 rounded-pill">{isEditing ? 'Update' : 'Add'}</button>
+                    {isEditing && <button type="button" className="btn btn-outline-secondary rounded-pill" onClick={resetProductForm}>Cancel</button>}
                   </div>
                 </form>
 
-                <h5 className="fw-bold mb-3 text-dark">Məhsul Siyahısı ({products.length})</h5>
+                <h5 className="fw-bold mb-3 text-dark">Product List ({products.length})</h5>
                 <div className="table-responsive">
                   <table className="table table-hover align-middle border">
                     <thead className="table-light">
                       <tr>
-                        <th>Şəkil</th>
-                        <th>Adı</th>
-                        <th>Kateqoriya</th>
-                        <th>Qiymət</th>
-                        <th>Əməliyyatlar</th>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -353,13 +353,13 @@ export const AdminPage = () => {
               </div>
             )}
 
-            {/* TAB 3: KATEQORİYA İDARƏETMƏ */}
+            {/* TAB 3: CATEGORY MANAGEMENT */}
             {activeTab === 'categories' && (
               <div>
-                <h4 className="fw-bold mb-4">Kateqoriyalar</h4>
+                <h4 className="fw-bold mb-4">Categories</h4>
                 <form onSubmit={handleAddCategory} className="d-flex gap-2 mb-4" style={{ maxWidth: '450px' }}>
-                  <input type="text" className="form-control" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="Yeni kateqoriya adı..." required />
-                  <button type="submit" className="btn btn-warning fw-bold text-nowrap rounded-pill px-4">Əlavə Et</button>
+                  <input type="text" className="form-control" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="New category name..." required />
+                  <button type="submit" className="btn btn-warning fw-bold text-nowrap rounded-pill px-4">Add</button>
                 </form>
 
                 <div className="list-group" style={{ maxWidth: '450px' }}>
@@ -375,21 +375,21 @@ export const AdminPage = () => {
               </div>
             )}
 
-            {/* TAB 4: SİFARİŞ İDARƏETMƏ */}
+            {/* TAB 4: ORDER MANAGEMENT */}
             {activeTab === 'orders' && (
               <div>
-                <h4 className="fw-bold mb-4">Sifarişlərin Siyahısı</h4>
+                <h4 className="fw-bold mb-4">Orders List</h4>
                 {adminOrders.length === 0 ? (
-                  <p className="text-muted text-center py-4">Hələ heç bir sifariş yoxdur.</p>
+                  <p className="text-muted text-center py-4">There are no orders yet.</p>
                 ) : (
                   <div className="table-responsive">
                     <table className="table table-hover align-middle border">
                       <thead className="table-light">
                         <tr>
                           <th>ID</th>
-                          <th>Tarix</th>
-                          <th>Ünvan</th>
-                          <th>Məbləğ</th>
+                          <th>Date</th>
+                          <th>Address</th>
+                          <th>Amount</th>
                           <th>Status</th>
                         </tr>
                       </thead>
